@@ -1,0 +1,263 @@
+/**
+ * Estilos para o seletor de temporadas
+ */
+
+/* Container do seletor */
+#season-selector-container {
+    margin: 20px 0;
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+#season-selector-container label {
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+#season-selector {
+    padding: 12px 20px;
+    border: 3px solid rgba(255, 255, 255, 0.4);
+    border-radius: 10px;
+    background: white;
+    color: #333;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+#season-selector:hover {
+    background: white;
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+#season-selector:focus {
+    outline: none;
+    border-color: #fff;
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.3);
+}
+
+#season-selector option {
+    padding: 12px;
+    background: white;
+    color: #333;
+    font-size: 16px;
+}
+
+#total-games-display {
+    color: white;
+    font-weight: 600;
+    font-size: 15px;
+    background: rgba(255, 255, 255, 0.15);
+    padding: 8px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+}
+
+/* Animações de atualização de stats */
+.stat-updating {
+    opacity: 0.5;
+    transform: scale(0.95);
+    transition: all 0.2s ease;
+}
+
+.stat-updated {
+    animation: statPulse 0.5s ease;
+}
+
+@keyframes statPulse {
+    0% {
+        transform: scale(1);
+        color: inherit;
+    }
+    50% {
+        transform: scale(1.1);
+        color: #667eea;
+        font-weight: bold;
+    }
+    100% {
+        transform: scale(1);
+        color: inherit;
+    }
+}
+
+.stats-updating {
+    animation: fadeInOut 0.6s ease;
+}
+
+@keyframes fadeInOut {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Loader */
+.season-loader {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.loader-content {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loader-message {
+    margin: 0;
+    color: #333;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+/* Notificações */
+.season-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+    max-width: 400px;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.season-notification.fade-out {
+    animation: slideOut 0.3s ease forwards;
+}
+
+@keyframes slideOut {
+    to {
+        transform: translateX(400px);
+        opacity: 0;
+    }
+}
+
+.season-notification.success {
+    background: #4caf50;
+    color: white;
+}
+
+.season-notification.error {
+    background: #f44336;
+    color: white;
+}
+
+.season-notification.info {
+    background: #2196F3;
+    color: white;
+}
+
+.notification-icon {
+    font-size: 20px;
+}
+
+.notification-message {
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* Destaque para estatísticas */
+.stat-highlight {
+    font-weight: bold;
+    color: #667eea;
+}
+
+/* Badge para tipo de temporada */
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.badge-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    #season-selector-container {
+        padding: 10px;
+        text-align: center;
+    }
+
+    #season-selector-container label {
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    #season-selector {
+        width: 100%;
+    }
+
+    .season-notification {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+}

@@ -702,16 +702,21 @@ def get_best_bets_data(request):
                                     continue
                                     
                                 player_id = player_info[0]['id']
-                                
-                                # Buscar props do jogador (usando cache)
-                                if player_id not in scraping_cache:
-                                    props_data = scrape_player_props(player_info[0]['first_name'], player_info[0]['last_name'])
-                                    scraping_cache[player_id] = props_data
-                                else:
-                                    props_data = scraping_cache[player_id]
-                                    
-                                if not props_data:
-                                    continue
+
+                                # REMOVIDO: Buscar props na página inicial (muito lento)
+                                # Props agora são buscadas apenas na página de detalhes do jogador
+                                # Para a página inicial, vamos pular jogadores sem props
+                                # if player_id not in scraping_cache:
+                                #     props_data = scrape_player_props(player_info[0]['first_name'], player_info[0]['last_name'])
+                                #     scraping_cache[player_id] = props_data
+                                # else:
+                                #     props_data = scraping_cache[player_id]
+
+                                # if not props_data:
+                                #     continue
+
+                                # Pula este jogador - sem buscar props na página inicial
+                                continue
 
                                 # Buscar logs do jogador (usando cache)
                                 if player_id not in logs_cache:
@@ -2484,73 +2489,49 @@ def map_stat_name(stat_name):
 
 def scrape_player_props(first_name, last_name):
     """
-    Realiza scraping das props de apostas de um jogador.
-    
+    Obtém props de apostas de um jogador usando o novo sistema de odds.
+
+    ATUALIZADO: Agora usa PrizePicks e outras fontes gratuitas em vez de Optimal Bet (pago).
+
     Args:
         first_name: Primeiro nome do jogador.
         last_name: Último nome do jogador.
-    
+
     Returns:
         dict: Props de apostas do jogador ou None se não encontrado.
     """
-    # Normalizar e formatar o nome do jogador para a URL
-    first = unidecode(first_name.strip().lower())
-    last = unidecode(last_name.strip().lower())
-    player_slug = f"{first}-{last}"
-    url = f"https://www.optimal-bet.com/player-props/{player_slug}"
+    from .odds_integration import get_player_odds
 
-    print(f"🔍 Acessando a página de props do jogador: {url}")
+    player_name = f"{first_name} {last_name}"
+    print(f"🔍 Buscando props para {player_name} usando novo sistema de odds...")
 
-    # Realizar a requisição HTTP
-    try:
-        response = requests.get(url)
-        print(f"Status da requisição HTTP: {response.status_code}")
-        if response.status_code != 200:
-            print(f"❌ Erro ao acessar a página: Status code {response.status_code}")
-            return None
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Erro na requisição: {e}")
-        return None
+    # Lista de stats comuns
+    stat_types = ['PTS', 'AST', 'REB', '3PT', 'BLK', 'STL', 'PTS+AST', 'PTS+REB', 'AST+REB', 'PTS+AST+REB']
 
-    # Analisar o conteúdo HTML
-    soup = BeautifulSoup(response.text, 'html.parser')
-    table = soup.find('table')
-
-    if not table:
-        print("❌ Tabela de props não encontrada na página.")
-        return None
-
-    print("✅ Tabela de props encontrada. Processando os dados...")
-
-    # Extrair os dados da tabela
     props_dict = {}
-    for tr in table.find('tbody').find_all('tr'):
-        cells = [td.text.strip() for td in tr.find_all('td')]
-        if len(cells) == 4:
-            prop_type = cells[0]
-            line = cells[1]
-            over = cells[2].replace('+', '')
-            under = cells[3].replace('+', '')
 
-            # Mapear estatísticas para a convenção usada no código
-            mapped_stat_type = map_stat_name(prop_type)
-            
-            print(f"Extraindo dados para {mapped_stat_type}: linha = {line}, over = {over}, under = {under}")
+    for stat_type in stat_types:
+        try:
+            odds_data = get_player_odds(player_name, stat_type)
 
-            over_decimal = american_to_decimal(over)
-            under_decimal = american_to_decimal(under)
+            if odds_data and odds_data.get('line', 0) > 0:
+                props_dict[stat_type] = {
+                    'line': odds_data['line'],
+                    'over_odds': odds_data.get('over_odds', 1.90),
+                    'under_odds': odds_data.get('under_odds', 1.90)
+                }
+                print(f"✅ Props obtidas para {stat_type}: linha={odds_data['line']}, fonte={odds_data.get('source')}")
 
-            props_dict[mapped_stat_type] = {
-                'line': line,
-                'over_odds': over_decimal,
-                'under_odds': under_decimal
-            }
+        except Exception as e:
+            print(f"⚠️ Erro ao buscar props de {stat_type}: {e}")
+            continue
 
-    if not props_dict:
-        print("❌ Nenhum dado extraído da tabela.")
+    if props_dict:
+        print(f"✅ Total de {len(props_dict)} props obtidas para {player_name}")
+        return props_dict
+    else:
+        print(f"❌ Nenhuma prop encontrada para {player_name}")
         return None
-
-    return props_dict
 
 
 def scrape_injuries_foxsports(player_name):
@@ -2631,7 +2612,7 @@ def player_details(request, player_id):
 
     # Se não houver jogos encontrados, cria um DataFrame vazio com as colunas necessárias
     if not all_logs:
-        player_log = pd.DataFrame(columns=['GAME_DATE', 'MATCHUP', 'MIN', 'PTS', 'AST', 'REB', 'FG3M', 'BLK', 'STL'])
+        player_log = pd.DataFrame(columns=['GAME_DATE', 'MATCHUP', 'MIN', 'PTS', 'AST', 'REB', 'FG3M', 'BLK', 'STL', 'SEASON_TYPE'])
     else:
         # Junta todos os jogos num único DataFrame
         player_log = pd.concat(all_logs, ignore_index=True)
@@ -2676,10 +2657,16 @@ def player_details(request, player_id):
     
     player_name = f"{player_info['FIRST_NAME']} {player_info['LAST_NAME']}"
     injuries = scrape_injuries_foxsports(player_name)
-    
+
+    # Busca temporadas disponíveis do jogador
+    from .season_helpers import get_available_seasons
+    available_seasons = get_available_seasons(player_id)
+
     return render(request, 'player_details.html', {
         'player': player_data,
         'injuries': injuries,
+        'available_seasons': available_seasons,
+        'current_season': season,
     })
 
 
@@ -3209,3 +3196,112 @@ def verificar_apostas_por_jogo(game_id, user=None):
 
     except Exception as e:
         print(f"❌ Erro em verificar_apostas_por_jogo: {e}")
+
+# ========================================================
+# API ENDPOINTS PARA TEMPORADAS (Múltiplas Seasons)
+# ========================================================
+
+def get_player_available_seasons(request, player_id):
+    """
+    API endpoint para obter lista de temporadas disponíveis para um jogador
+    
+    Returns JSON: {
+        "success": true,
+        "seasons": ["2024-25", "2023-24", ...],
+        "current_season": "2024-25"
+    }
+    """
+    try:
+        from .season_helpers import get_available_seasons, get_current_season
+        
+        seasons = get_available_seasons(player_id)
+        current_season = get_current_season()
+        
+        return JsonResponse({
+            'success': True,
+            'seasons': seasons,
+            'current_season': current_season,
+            'player_id': player_id
+        })
+        
+    except Exception as e:
+        return JsonResponse({
+            'success': False,
+            'error': str(e)
+        }, status=500)
+
+
+def get_player_stats_by_season(request, player_id):
+    """
+    API endpoint para obter estatísticas de um jogador para uma temporada específica
+    
+    Query params:
+        season: Temporada no formato "2024-25" (opcional, default = temporada atual)
+    
+    Returns JSON: {
+        "success": true,
+        "season": "2024-25",
+        "stats": {...},
+        "last_10_games": [...]
+    }
+    """
+    try:
+        from .nba_cache_helpers import get_cached_player_info, get_cached_player_stats
+        from .season_helpers import get_current_season
+        
+        # Obtém temporada da query string ou usa temporada atual
+        season = request.GET.get('season', get_current_season())
+        
+        # Busca informações do jogador
+        player_info = get_cached_player_info(player_id)
+        
+        if not player_info:
+            return JsonResponse({
+                'success': False,
+                'error': 'Jogador não encontrado'
+            }, status=404)
+        
+        player_name = f"{player_info['FIRST_NAME']} {player_info['LAST_NAME']}"
+        
+        # Busca estatísticas da temporada especificada
+        stats_data = get_cached_player_stats(player_id, player_name, season)
+        
+        if not stats_data:
+            return JsonResponse({
+                'success': False,
+                'error': f'Sem dados disponíveis para a temporada {season}'
+            }, status=404)
+        
+        # Formata datas dos jogos para JSON
+        last_10_games = stats_data.get('last_10_games', [])
+        formatted_games = []
+
+        for game in last_10_games:
+            game_copy = {}
+            for key, value in game.items():
+                # Converte todos os valores para tipos JSON-serializáveis
+                if hasattr(value, 'isoformat'):  # datetime/timestamp
+                    game_copy[key] = value.isoformat() if hasattr(value, 'isoformat') else str(value)
+                elif isinstance(value, (int, float, str, bool, type(None))):
+                    game_copy[key] = value
+                else:
+                    game_copy[key] = str(value)
+            formatted_games.append(game_copy)
+
+        return JsonResponse({
+            'success': True,
+            'player_id': player_id,
+            'player_name': player_name,
+            'season': season,
+            'stats': stats_data.get('averages', {}),
+            'last_10_games': formatted_games,
+            'total_games': stats_data.get('total_games', 0)
+        })
+        
+    except Exception as e:
+        import traceback
+        return JsonResponse({
+            'success': False,
+            'error': str(e),
+            'traceback': traceback.format_exc()
+        }, status=500)

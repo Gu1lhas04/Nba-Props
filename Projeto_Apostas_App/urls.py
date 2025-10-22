@@ -23,8 +23,12 @@ urlpatterns = [
     path('player/<int:player_id>/stat/<str:stat_type>/', views.player_stat, name='player_stat'),
     path('get_filtered_graph/', views.player_filtered_graph, name='get_filtered_graph'),
     path('get_next_game/', views.get_next_game, name='get_next_game'),
-    
-        # Redirecionar /accounts/login/ para /login/
+
+    # API endpoints para múltiplas temporadas
+    path('api/player/<int:player_id>/seasons/', views.get_player_available_seasons, name='get_player_seasons'),
+    path('api/player/<int:player_id>/stats/', views.get_player_stats_by_season, name='get_player_stats_season'),
+
+    # Redirecionar /accounts/login/ para /login/
     path('accounts/login/', lambda request: redirect('login')),
 
 ]

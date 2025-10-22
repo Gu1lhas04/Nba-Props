@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="{% static 'css/sidebar.css' %}">
   <link rel="stylesheet" href="{% static 'css/header.css' %}">
   <link rel="stylesheet" href="{% static 'css/geral.css' %}">
+  <link rel="stylesheet" href="{% static 'css/season_selector.css' %}">
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 
@@ -70,6 +71,17 @@
         </div>
       </div>
 
+      <!-- Seletor de Temporada -->
+      <div id="season-selector-container">
+        <label for="season-selector">
+          🏀 Temporada:
+        </label>
+        <select id="season-selector">
+          <option value="{{ current_season }}">{{ current_season }}</option>
+        </select>
+        <span id="total-games-display"></span>
+      </div>
+
       <article class="player-profile">
         <img src="https://cdn.nba.com/headshots/nba/latest/1040x760/{{ player.player_id }}.png" class="player-photo"
           alt="{{ player.full_name }} Photo" />
@@ -83,27 +95,27 @@
           <h3 class="stats-title">Média</h3>
           <div class="stats-grid">
             <div class="stat-item">
-              <p class="stat-value">{{ player.stats.points }}</p>
+              <p class="stat-value" id="player-points">{{ player.stats.points }}</p>
               <p class="stat-label">Points</p>
             </div>
             <div class="stat-item">
-              <p class="stat-value">{{ player.stats.assists }}</p>
+              <p class="stat-value" id="player-assists">{{ player.stats.assists }}</p>
               <p class="stat-label">Assists</p>
             </div>
             <div class="stat-item">
-              <p class="stat-value">{{ player.stats.rebounds }}</p>
+              <p class="stat-value" id="player-rebounds">{{ player.stats.rebounds }}</p>
               <p class="stat-label">Rebounds</p>
             </div>
             <div class="stat-item">
-              <p class="stat-value">{{ player.stats.three_point }}</p>
+              <p class="stat-value" id="player-3pt">{{ player.stats.three_point }}</p>
               <p class="stat-label">3PT</p>
             </div>
             <div class="stat-item">
-              <p class="stat-value">{{ player.stats.blocks }}</p>
+              <p class="stat-value" id="player-blocks">{{ player.stats.blocks }}</p>
               <p class="stat-label">Blocks</p>
             </div>
             <div class="stat-item">
-              <p class="stat-value">{{ player.stats.steals }}</p>
+              <p class="stat-value" id="player-steals">{{ player.stats.steals }}</p>
               <p class="stat-label">Steals</p>
             </div>
           </div>
@@ -159,7 +171,7 @@
           <p class="table-header-cell">Steals</p>
         </div>
 
-        <div class="games-table">
+        <div class="games-table" id="last-10-games-container">
           {% for game in player.last_10_games %}
           <div class="game-row">
             <p class="game-cell">{{ game.GAME_DATE|date:"d-m-Y" }}</p>
@@ -182,6 +194,15 @@
   <script src="{% static 'js/header.js' %}"></script>
   <script src="{% static 'js/player_stat.js' %}"></script>
   <script src="{% static 'js/geral.js' %}"></script>
+
+  <!-- Season Selector -->
+  <script src="{% static 'js/season_selector.js' %}"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('🏀 Inicializando seletor de temporadas...');
+      initSeasonSelector({{ player.player_id }}, "{{ current_season }}");
+    });
+  </script>
 </body>
 
 </html>

@@ -1,21 +1,80 @@
-# Ignorar diretórios específicos de ambientes
+# Python
 __pycache__/
-*.pyc
-*.pyo
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.manifest
+*.spec
 
-# Ignorar ambiente virtual
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+/staticfiles/
+/media/
+
+# Ambiente Virtual
 venv/
 env/
+ENV/
+env.bak/
+venv.bak/
 
-# Ignorar configurações de IDEs
+# IDEs
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
+.DS_Store
 
-
-# Ignorar arquivos temporários
-*.log
-
-/staticfiles/
-
-# Ignorar variáveis de ambiente
+# Variáveis de Ambiente
 .env
+.env.local
+.env.*.local
+
+# Cache
+*.cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Documentação Temporária (apenas arquivos temporários de desenvolvimento)
+*_TEMP.md
+*_TESTE.md
+TESTE_*.txt
+TEMP_*.txt
+
+# Logs
+*.log
+logs/
+*.out
+
+# Database dumps
+*.dump
+*.sql
+
+# Ngrok
+ngrok
+ngrok.exe
+ngrok.yml
+
+# System files
+Thumbs.db
+.DS_Store

@@ -32,13 +32,15 @@ LOGIN_URL = '/login/'
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',  # WebSocket support - deve estar no topo
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'Projeto_Apostas_App',  
+    'channels',  # Django Channels
+    'Projeto_Apostas_App',
 ]
 
 MIDDLEWARE = [
@@ -71,6 +73,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'Projeto_Apostas.wsgi.application'
+ASGI_APPLICATION = 'Projeto_Apostas.asgi.application'
 
 from dotenv import load_dotenv
 
@@ -174,4 +177,46 @@ PROXY_PASSWORD = os.getenv('PROXY_PASSWORD', '')
 
 # Configuração de timeout para requisições
 REQUEST_TIMEOUT = int(os.getenv('REQUEST_TIMEOUT', '30'))
+
+# ============================================
+# CONFIGURAÇÕES WEBSOCKET E REAL-TIME
+# ============================================
+
+# Channels Layer - usando Redis como backend
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(os.getenv('REDIS_HOST', '127.0.0.1'), int(os.getenv('REDIS_PORT', '6379')))],
+        },
+    },
+}
+
+# ============================================
+# CONFIGURAÇÕES MONGODB - CACHE NBA DATA
+# ============================================
+
+# Conexão MongoDB
+MONGODB_SETTINGS = {
+    'host': os.getenv('MONGODB_HOST', 'localhost'),
+    'port': int(os.getenv('MONGODB_PORT', '27017')),
+    'db': os.getenv('MONGODB_DB', 'nba_cache'),
+    'username': os.getenv('MONGODB_USER', ''),
+    'password': os.getenv('MONGODB_PASSWORD', ''),
+}
+
+# Construir MongoDB URI
+if MONGODB_SETTINGS['username'] and MONGODB_SETTINGS['password']:
+    MONGODB_URI = f"mongodb://{MONGODB_SETTINGS['username']}:{MONGODB_SETTINGS['password']}@{MONGODB_SETTINGS['host']}:{MONGODB_SETTINGS['port']}/{MONGODB_SETTINGS['db']}"
+else:
+    MONGODB_URI = f"mongodb://{MONGODB_SETTINGS['host']}:{MONGODB_SETTINGS['port']}/{MONGODB_SETTINGS['db']}"
+
+# Cache settings - TTL em segundos
+NBA_CACHE_SETTINGS = {
+    'PLAYER_STATS_TTL': 300,  # 5 minutos
+    'LIVE_GAMES_TTL': 10,  # 10 segundos para jogos ao vivo
+    'PLAYER_INFO_TTL': 3600,  # 1 hora
+    'TEAM_INFO_TTL': 3600,  # 1 hora
+    'GAME_SCHEDULE_TTL': 600,  # 10 minutos
+}
 
